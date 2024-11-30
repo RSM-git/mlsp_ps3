@@ -1,13 +1,13 @@
 from scipy.io import loadmat
 from scipy.fft import idct, dct
-
 from sklearn.linear_model import Lasso, LassoLars
-
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = loadmat("mlsp_ps3/problem3_1.mat")
+algorithm = "OMP"
 
+# Load data and setup DCT and sensing matrix
+data = loadmat("problem3_1.mat")
 idx = data["n"].flatten() - 1
 x = data["x"].flatten()
 
@@ -17,7 +17,6 @@ l = 2 ** 9
 assert N == len(x), f"{N=} should match the number of samples"
 
 Phi = dct(np.eye(l), axis=0, norm='ortho')
-
 B = np.zeros((N, l))
 
 for i in range(N):
@@ -25,8 +24,7 @@ for i in range(N):
 
 BF = B @ Phi
 
-algorithm = "IST"
-
+# Lasso / LassoLars
 lambda_ = 0.005
 model = Lasso(lambda_, fit_intercept=False)
 model.fit(BF, x)
@@ -54,12 +52,11 @@ if algorithm == "IST":
 
     x_hat = Phi @ solsIST
 
-    fig, ax= plt.subplots(1, 1, figsize=(12, 3))
-    ax.plot(x_hat)
-    ax.plot(idx, x, ".", color="orange")
-    ax.set_title('Estimated using randomly picked samples')
-    fig.tight_layout()
-    plt.show()
+    fig, ax= plt.subplots(2, 1, figsize=(12, 8))
+    ax[0].plot(x_hat)
+    ax[0].plot(idx, x, ".", color="orange")
+    ax[0].set_title('Estimated using randomly picked samples')
+    
 
     # Rescale the coefficients.
     a_hat = np.sqrt(2 / l) * solsIST[solsIST > 1e-10]
@@ -73,8 +70,11 @@ if algorithm == "IST":
     for i in range(4):
         x_true += a_hat[i]*np.cos(np.pi/(2*l)*(2*m_hat[i]-1)*np.arange(l))
 
-    plt.plot(x_true)
-    plt.plot(idx, x, ".", color="orange")
+    ax[1].plot(x_true)
+    ax[1].plot(idx, x, ".", color="orange")
+    ax[1].set_title("Signal reconstruction with coefficients and frequencies.")
+    fig.tight_layout()
+    
     plt.show()
 
 elif algorithm == "OMP":
@@ -105,17 +105,30 @@ elif algorithm == "OMP":
     ax.legend()
     ax.set_title('Solutions')
 
+    # Extract the indices of the K largest coefficients
     arg_idx = ind = np.argpartition(solsOMP, -k_OMP)[-k_OMP:]
 
-    print(np.round(solsOMP[arg_idx]*np.sqrt(2/l), 2))
-    print(np.round(arg_idx, 2)+1)
+    a_hat = solsOMP[arg_idx]*np.sqrt(2/l)
+    m_hat = arg_idx + 1
+
+    print(f"K = {k_OMP}")
+    print(f"a_hat = {np.round(a_hat,2)}")
+    print(f"m_hat = {m_hat}")
 
     # solsOMP is the estimated X, reconstruct x using the synthesis
     x_hat = Phi @ solsOMP
 
-    fig, ax= plt.subplots(1, 1, figsize=(12, 3))
-    ax.plot(x_hat)
-    ax.plot(idx, x, ".", color="orange")
-    ax.set_title('Estimated using randomly picked samples')
+    fig, ax= plt.subplots(2, 1, figsize=(12, 8))
+    ax[0].plot(x_hat)
+    ax[0].plot(idx, x, ".", color="orange")
+    ax[0].set_title('Estimated using randomly picked samples')
+
+    x_true = np.zeros(l)
+    for i in range(4):
+        x_true += a_hat[i]*np.cos(np.pi/(2*l)*(2*m_hat[i]-1)*np.arange(l))
+
+    ax[1].plot(x_true)
+    ax[1].plot(idx, x, ".", color="orange")
+    ax[1].set_title("Signal reconstruction with coefficients and frequencies.")
     fig.tight_layout()
     plt.show()
