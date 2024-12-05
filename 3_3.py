@@ -37,6 +37,9 @@ def estimate_error(A, A_hat):
     #                 np.linalg.norm(A - A_hat[:, ::-1]), np.linalg.norm(A - A_hat[::-1, ::-1])] Includes row permutations and row+column permutations
     permutations = [np.linalg.norm(A - A_hat), np.linalg.norm(A - A_hat[:, ::-1])] # Only permutes the columns.
 
+    error = np.min(permutations)
+
+
     return np.min(permutations), [A_hat, A_hat[:, ::-1]][np.argmin(permutations)]
 
 
@@ -84,10 +87,12 @@ def run_experiment(experiment_num: int = 0, iterations: int = 100, N: int = 2500
         error, A_hat = estimate_error(A, np.linalg.inv(W))
         errors.append(error)
 
+
     plt.figure(figsize=(12,4))
     plt.plot(errors)
     plt.title(f"Error across {iterations} repetitions.")
-    plt.savefig(f"experiment_{experiment_num}_error.pdf")
+    # plt.savefig(f"experiment_{experiment_num}_error.pdf")
+    plt.show()
 
     # Compute estimated sources (unmixed signals)
     y_hat = np.linalg.inv(A_hat) @ x
@@ -106,9 +111,12 @@ def run_experiment(experiment_num: int = 0, iterations: int = 100, N: int = 2500
     plt.subplot(1, 3, 3)
     plt.scatter(y_hat[0,:],y_hat[1,:], s=2)
     plt.title("Estimated sources $(\hat{A}^{-1}x)$")
-    plt.savefig(f"experiment_{experiment_num}_signals.pdf")
+    # plt.savefig(f"experiment_{experiment_num}_signals.pdf")
+    plt.show()
 
-run_experiment(experiment_num=0, N=5000)
-run_experiment(experiment_num=1, N=5000)
-run_experiment(experiment_num=2, N=5000)
-run_experiment(experiment_num=3, N=5000)
+
+if __name__ == '__main__':
+    run_experiment(experiment_num=0, N=5000)
+    run_experiment(experiment_num=1, N=5000)
+    run_experiment(experiment_num=2, N=5000)
+    run_experiment(experiment_num=3, N=5000, ICA_param_dict= {"mu": 0.01, "iterations": 200, "components": 2, "gaussianity": "sub"})
