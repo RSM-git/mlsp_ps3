@@ -1,6 +1,6 @@
 from scipy.io import loadmat
-from scipy.fft import idct, dct
-from sklearn.linear_model import Lasso, LassoLars
+from scipy.fft import dct
+from sklearn.linear_model import Lasso
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -24,7 +24,7 @@ for i in range(N):
 
 BF = B @ Phi
 
-# Lasso / LassoLars
+# Lasso solution
 lambda_ = 0.005
 model = Lasso(lambda_, fit_intercept=False)
 model.fit(BF, x)
@@ -55,13 +55,14 @@ if algorithm == "IST":
     fig, ax= plt.subplots(2, 1, figsize=(12, 8))
     ax[0].plot(x_hat)
     ax[0].plot(idx, x, ".", color="orange")
-    ax[0].set_title('Estimated using randomly picked samples')
+    ax[0].set_title('Signal estimate using the given data points')
     
 
     # Rescale the coefficients.
     a_hat = np.sqrt(2 / l) * solsIST[solsIST > 1e-10]
     m_hat = np.where(solsIST > 1e-10)[0]+1
 
+    print("Parameter estimates")
     print(f"K = {len(a_hat)}")
     print(f"a_hat = {np.round(a_hat,2)}")
     print(f"m_hat = {m_hat}")
@@ -78,10 +79,8 @@ if algorithm == "IST":
     plt.show()
 
 elif algorithm == "OMP":
-    # create OMP solution
-    k_OMP = 4  # number of vectors
+    k_OMP = 4  # non-zero components
     X = BF  # set X
-    # initialize
     residual = x
     S = np.zeros(k_OMP, dtype=int)
     normx = np.sqrt(np.sum(X**2, axis=0)) # shortcut formula
@@ -97,20 +96,21 @@ elif algorithm == "OMP":
     
     solsOMP = theta
 
-
     # plot solutions
     fig, ax= plt.subplots(1, 1, figsize=(6, 3))
     ax.stem(solsB, markerfmt='bo', label='sklearn Lasso', basefmt=' ')
     ax.stem(solsOMP, markerfmt='ro', label='OMP', basefmt=' ')
     ax.legend()
     ax.set_title('Solutions')
+    plt.show()
 
     # Extract the indices of the K largest coefficients
-    arg_idx = ind = np.argpartition(solsOMP, -k_OMP)[-k_OMP:]
+    arg_idx = np.argpartition(solsOMP, -k_OMP)[-k_OMP:]
 
     a_hat = solsOMP[arg_idx]*np.sqrt(2/l)
     m_hat = arg_idx + 1
 
+    print("Parameter estimates")
     print(f"K = {k_OMP}")
     print(f"a_hat = {np.round(a_hat,2)}")
     print(f"m_hat = {m_hat}")
@@ -121,7 +121,7 @@ elif algorithm == "OMP":
     fig, ax= plt.subplots(2, 1, figsize=(12, 8))
     ax[0].plot(x_hat)
     ax[0].plot(idx, x, ".", color="orange")
-    ax[0].set_title('Estimated using randomly picked samples')
+    ax[0].set_title('Signal estimate using the given data points')
 
     x_true = np.zeros(l)
     for i in range(4):
@@ -131,4 +131,5 @@ elif algorithm == "OMP":
     ax[1].plot(idx, x, ".", color="orange")
     ax[1].set_title("Signal reconstruction with coefficients and frequencies.")
     fig.tight_layout()
+    plt.savefig("3_1_reconstruction.pdf")
     plt.show()
