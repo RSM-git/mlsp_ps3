@@ -76,12 +76,16 @@ regressor.fit(t.reshape(-1, 1), y.reshape(-1, 1))
 print(regressor.n_support_)
 y_pred = regressor.predict(t.reshape(-1, 1))
 outliers = np.abs(y_pred - y) > 1.5*epsilon
-# t_nout = t[~outliers]
+t_nout = t[~outliers]
 y_nout = y[~outliers]
 noise_nouts = noise[~outliers]
 P_y = np.mean(y_nout**2)
 P_n = np.mean(noise_nouts**2)
 print(P_y / P_n)
+regressor.fit(t_nout.reshape(-1, 1), y_nout.reshape(-1, 1))
+y_pred = regressor.predict(t.reshape(-1, 1))
+center_idx = np.argmax(y_pred)
+print(f"Center location: t={t[center_idx]}")
 
 plt.plot(t, y, color="b", label="Original signal")
 plt.plot(t, y_pred, color="r", label="Support vector regression")
